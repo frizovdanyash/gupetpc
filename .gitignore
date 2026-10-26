@@ -1,0 +1,9 @@
+build64/
+build32/
+bin/
+*.exe
+*.o
+*.obj
+.vscode/
+.idea/
+*.user
