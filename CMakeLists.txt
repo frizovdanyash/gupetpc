@@ -18,7 +18,6 @@ if (WIN32)
         src/pet_overlay.cpp
         src/settings_dialog.cpp
         src/tray_icon.cpp
-        src/web_server.cpp
         src/miniz.c
         res/resource.rc
     )
@@ -34,7 +33,6 @@ if (WIN32)
         uxtheme
         msimg32
         winmm
-        ws2_32
     )
 
     if (MINGW)
@@ -48,9 +46,9 @@ else()
         src/main_linux.cpp
         src/pet_renderer_cairo.cpp
         src/pet_overlay_linux.cpp
+        src/settings_dialog_linux.cpp
         src/settings_manager.cpp
         src/skin_store.cpp
-        src/web_server.cpp
         src/miniz.c
     )
 

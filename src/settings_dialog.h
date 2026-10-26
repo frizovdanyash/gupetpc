@@ -26,8 +26,11 @@ private:
     void PopulateSkins(HWND hwnd);
     void UpdateStats(HWND hwnd);
     void RefreshPreview(HWND hwnd);
+    void ApplyCustomSize(HWND hwnd, float scale);
 
     HWND m_hwnd = NULL;
+    HBRUSH m_hBgBrush = NULL;
+    HBRUSH m_hCardBrush = NULL;
 };
 
 } // namespace GUPet

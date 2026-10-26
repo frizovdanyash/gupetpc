@@ -2,7 +2,6 @@
 #include "pet_overlay.h"
 #include "settings_manager.h"
 #include "settings_dialog.h"
-#include "web_server.h"
 #include "../res/resource.h"
 
 namespace GUPet {
@@ -39,7 +38,7 @@ void TrayIcon::OnTrayMessage(WPARAM wParam, LPARAM lParam) {
     if (lParam == WM_RBUTTONUP) {
         ShowMenu();
     } else if (lParam == WM_LBUTTONDBLCLK || lParam == WM_LBUTTONUP) {
-        WebServer::Instance().OpenSettingsInBrowser();
+        SettingsDialog::Instance().Show(m_hwnd);
     }
 }
 
@@ -111,7 +110,7 @@ void TrayIcon::ShowMenu() {
             break;
         }
         case ID_TRAY_SETTINGS:
-            WebServer::Instance().OpenSettingsInBrowser();
+            SettingsDialog::Instance().Show(m_hwnd);
             break;
         case ID_TRAY_EXIT:
             PostQuitMessage(0);

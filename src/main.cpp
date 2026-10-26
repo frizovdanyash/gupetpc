@@ -10,7 +10,6 @@
 #include "tray_icon.h"
 #include "settings_dialog.h"
 #include "audio_monitor.h"
-#include "web_server.h"
 #include "../res/resource.h"
 
 using namespace Gdiplus;
@@ -58,19 +57,6 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 
     GUPet::AudioMonitor::Instance().Init();
 
-    // Start embedded Material 3 UI server
-    if (GUPet::WebServer::Instance().Start(23847)) {
-        GUPet::WebServer::Instance().SetOnSettingsChanged([](const GUPet::PetSettings&) {
-            GUPet::PetOverlay::Instance().ReloadSettings();
-        });
-        GUPet::WebServer::Instance().SetOnAction([](const std::string& act) {
-            if (act == "recenter") GUPet::PetOverlay::Instance().Recenter();
-            else if (act == "poop") GUPet::PetOverlay::Instance().PoopNow();
-            else if (act == "clean") GUPet::PetOverlay::Instance().CleanAllPoops();
-            else if (act == "say") GUPet::PetOverlay::Instance().Say("hello", true);
-        });
-    }
-
     if (!GUPet::PetOverlay::Instance().Init()) {
         MessageBoxW(NULL, L"Не удалось инициализировать GUPet.", L"Ошибка", MB_OK | MB_ICONERROR);
         GdiplusShutdown(gdiplusToken);
@@ -82,8 +68,6 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
     GUPet::TrayIcon::Instance().Init(GUPet::PetOverlay::Instance().GetHwnd());
 
     if (lpCmdLine && (wcsstr(lpCmdLine, L"--settings") || wcsstr(lpCmdLine, L"-s"))) {
-        GUPet::WebServer::Instance().OpenSettingsInBrowser();
-    } else if (lpCmdLine && wcsstr(lpCmdLine, L"--native-settings")) {
         GUPet::SettingsDialog::Instance().Show(GUPet::PetOverlay::Instance().GetHwnd());
     }
 
@@ -100,7 +84,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
         }
 
         if (msg.message == WM_COMMAND && msg.wParam == ID_TRAY_SETTINGS) {
-            GUPet::WebServer::Instance().OpenSettingsInBrowser();
+            GUPet::SettingsDialog::Instance().Show(GUPet::PetOverlay::Instance().GetHwnd());
             continue;
         }
 
@@ -108,7 +92,6 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
         DispatchMessageW(&msg);
     }
 
-    GUPet::WebServer::Instance().Stop();
     GUPet::TrayIcon::Instance().Shutdown();
     GUPet::PetOverlay::Instance().Shutdown();
     GUPet::AudioMonitor::Instance().Shutdown();

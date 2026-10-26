@@ -1,7 +1,7 @@
 #include "pet_overlay_linux.h"
 #include "settings_manager.h"
+#include "settings_dialog_linux.h"
 #include "skin_store.h"
-#include "web_server.h"
 
 #include <iostream>
 #include <cstring>
@@ -15,7 +15,7 @@ int main(int argc, char* argv[]) {
             std::cout << "GUPet — Пиксельный питомец для рабочего стола\n"
                       << "Использование: gupet [опции]\n\n"
                       << "Опции:\n"
-                      << "  -s, --settings    Открыть панель настроек в браузере\n"
+                      << "  -s, --settings    Открыть окно настроек\n"
                       << "  -h, --help        Показать эту справку\n";
             return 0;
         }
@@ -25,31 +25,17 @@ int main(int argc, char* argv[]) {
     GUPet::SettingsManager::Instance().Init();
     GUPet::SkinStore::Instance().Init(GUPet::SettingsManager::Instance().GetAppDataDirA());
 
-    // Start embedded Material 3 UI server
-    if (GUPet::WebServer::Instance().Start(23847)) {
-        GUPet::WebServer::Instance().SetOnSettingsChanged([](const GUPet::PetSettings&) {
-            GUPet::PetOverlayLinux::Instance().ReloadSettings();
-        });
-        GUPet::WebServer::Instance().SetOnAction([](const std::string& act) {
-            if (act == "recenter") GUPet::PetOverlayLinux::Instance().Recenter();
-            else if (act == "poop") GUPet::PetOverlayLinux::Instance().PoopNow();
-            else if (act == "clean") GUPet::PetOverlayLinux::Instance().CleanAllPoops();
-            else if (act == "say") GUPet::PetOverlayLinux::Instance().Say("idle", true);
-        });
-
-        if (openSettingsOnly) {
-            GUPet::WebServer::Instance().OpenSettingsInBrowser();
-        }
-    }
-
     if (!GUPet::PetOverlayLinux::Instance().Init(argc, argv)) {
         std::cerr << "Не удалось инициализировать окно питомца (проверьте DISPLAY/Wayland)" << std::endl;
         return 1;
     }
 
+    if (openSettingsOnly) {
+        GUPet::SettingsDialogLinux::Instance().Show();
+    }
+
     GUPet::PetOverlayLinux::Instance().Run();
     GUPet::PetOverlayLinux::Instance().Shutdown();
-    GUPet::WebServer::Instance().Stop();
 
     return 0;
 }

@@ -1,7 +1,7 @@
 #include "pet_overlay_linux.h"
 #include "settings_manager.h"
+#include "settings_dialog_linux.h"
 #include "phrases.h"
-#include "web_server.h"
 
 #include <chrono>
 #include <random>
@@ -871,7 +871,7 @@ void PetOverlayLinux::ShowContextMenu(guint button, guint32 time) {
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), sep1);
 
     addMenuItem("Настройки...", G_CALLBACK(+[](GtkMenuItem*, gpointer) {
-        WebServer::Instance().OpenSettingsInBrowser();
+        SettingsDialogLinux::Instance().Show();
     }));
 
     addMenuItem("Скрыть питомца", G_CALLBACK(+[](GtkMenuItem*, gpointer d) {

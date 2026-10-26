@@ -8,8 +8,8 @@ IDI_APP_ICON ICON "res/gupet.ico"
 1 24 "res/gupet.manifest"
 
 VS_VERSION_INFO VERSIONINFO
-FILEVERSION 2,0,0,0
-PRODUCTVERSION 2,0,0,0
+FILEVERSION 2,1,2,0
+PRODUCTVERSION 2,1,2,0
 FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
 FILEFLAGS 0x1L
@@ -26,12 +26,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "danyash frizov"
             VALUE "FileDescription", "GUPet — пиксельный питомец"
-            VALUE "FileVersion", "2.0.0.0"
+            VALUE "FileVersion", "2.1.2.0"
             VALUE "InternalName", "gupet"
             VALUE "LegalCopyright", "© 2026 Danyash Frizov"
             VALUE "OriginalFilename", "gupet.exe"
             VALUE "ProductName", "GUPet"
-            VALUE "ProductVersion", "2.0.0.0"
+            VALUE "ProductVersion", "2.1.2.0"
         END
     END
     BLOCK "VarFileInfo"
@@ -40,55 +40,60 @@ BEGIN
     END
 END
 
-IDD_SETTINGS DIALOGEX 0, 0, 360, 380
-STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "GUPet — Настройки"
+IDD_SETTINGS DIALOGEX 0, 0, 380, 415
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "GUPet — Настройки питомца"
 FONT 9, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    // Left side: Preview & Species & Palette
-    GROUPBOX        "Внешний вид", -1, 10, 8, 165, 235
-    CONTROL         "", IDC_PREVIEW_AREA, "Static", SS_OWNERDRAW | WS_CHILD | WS_VISIBLE, 22, 22, 140, 75
+    // Left card: Appearance & Size
+    GROUPBOX        "Внешний вид и размер", -1, 10, 8, 175, 275
+    CONTROL         "", IDC_PREVIEW_AREA, "Static", SS_OWNERDRAW | WS_CHILD | WS_VISIBLE, 18, 22, 158, 85
     
-    LTEXT           "Вид питомца:", -1, 20, 104, 80, 8
-    AUTORADIOBUTTON "GUPet", IDC_SPECIES_GUPET, 20, 116, 45, 10, WS_GROUP
-    AUTORADIOBUTTON "Кошка", IDC_SPECIES_CAT, 68, 116, 45, 10
-    AUTORADIOBUTTON "Собака", IDC_SPECIES_DOG, 116, 116, 45, 10
+    LTEXT           "Вид питомца:", -1, 18, 114, 70, 8
+    AUTORADIOBUTTON "GUPet", IDC_SPECIES_GUPET, 18, 126, 45, 10, WS_GROUP
+    AUTORADIOBUTTON "Кошка", IDC_SPECIES_CAT, 68, 126, 45, 10
+    AUTORADIOBUTTON "Собака", IDC_SPECIES_DOG, 120, 126, 48, 10
 
-    LTEXT           "Цветовая палитра:", -1, 20, 134, 100, 8
-    COMBOBOX        IDC_PALETTE_COMBO, 20, 146, 145, 120, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Цветовая палитра:", -1, 18, 144, 90, 8
+    COMBOBOX        IDC_PALETTE_COMBO, 18, 156, 158, 120, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 
-    LTEXT           "Размер:", -1, 20, 168, 50, 8
-    RTEXT           "4.0x", IDC_SIZE_VALUE, 120, 168, 45, 8
-    CONTROL         "", IDC_SIZE_SLIDER, "msctls_trackbar32", TBS_AUTOTICKS | WS_TABSTOP, 18, 178, 149, 20
+    LTEXT           "Масштаб питомца:", -1, 18, 178, 75, 8
+    EDITTEXT        IDC_SIZE_EDIT, 118, 175, 36, 13, ES_AUTOHSCROLL | ES_CENTER
+    LTEXT           "x", -1, 158, 178, 10, 8
+    CONTROL         "", IDC_SIZE_SLIDER, "msctls_trackbar32", TBS_AUTOTICKS | WS_TABSTOP, 14, 192, 166, 20
+    RTEXT           "4.0x", IDC_SIZE_VALUE, 110, 214, 66, 8
 
-    LTEXT           "Засыпать через:", -1, 20, 204, 75, 8
-    COMBOBOX        IDC_SLEEP_COMBO, 95, 202, 70, 90, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Когда засыпать:", -1, 18, 234, 70, 8
+    COMBOBOX        IDC_SLEEP_COMBO, 90, 232, 86, 90, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 
-    // Right side: Behaviors
-    GROUPBOX        "Поведение", -1, 185, 8, 165, 235
-    AUTOCHECKBOX    "Самостоятельно гулять", IDC_CHK_WANDER, 195, 24, 145, 12
-    AUTOCHECKBOX    "Реплики и фразы", IDC_CHK_PHRASES, 195, 42, 145, 12
-    AUTOCHECKBOX    "Гравитация и физика", IDC_CHK_GRAVITY, 195, 60, 145, 12
-    AUTOCHECKBOX    "Реакция на встряхивание", IDC_CHK_SHAKE, 195, 78, 145, 12
-    AUTOCHECKBOX    "Звуковые отклики", IDC_CHK_HAPTICS, 195, 96, 145, 12
-    AUTOCHECKBOX    "Оставлять кучки", IDC_CHK_POOP, 195, 114, 145, 12
-    AUTOCHECKBOX    "Танец под музыку", IDC_CHK_DANCE, 195, 132, 145, 12
+    // Right card: Behaviors & Actions
+    GROUPBOX        "Поведение и возможности", -1, 195, 8, 175, 275
+    AUTOCHECKBOX    "Самостоятельно гулять", IDC_CHK_WANDER, 203, 22, 155, 11
+    AUTOCHECKBOX    "Реплики и облачка фраз", IDC_CHK_PHRASES, 203, 37, 155, 11
+    AUTOCHECKBOX    "Гравитация и физика", IDC_CHK_GRAVITY, 203, 52, 155, 11
+    AUTOCHECKBOX    "Реакция на встряхивание", IDC_CHK_SHAKE, 203, 67, 155, 11
+    AUTOCHECKBOX    "Звуковые отклики", IDC_CHK_HAPTICS, 203, 82, 155, 11
+    AUTOCHECKBOX    "Оставлять кучки", IDC_CHK_POOP, 203, 97, 155, 11
+    AUTOCHECKBOX    "Танец под музыку", IDC_CHK_DANCE, 203, 112, 155, 11
+    AUTOCHECKBOX    "Всегда поверх всех окон", IDC_CHK_TOPMOST, 203, 127, 155, 11
+    AUTOCHECKBOX    "Режим призрака (клик насквозь)", IDC_CHK_GHOST, 203, 142, 160, 11
+    AUTOCHECKBOX    "Автозапуск при входе", IDC_CHK_AUTOSTART, 203, 157, 155, 11
 
-    // Action buttons inside Behavior
-    LTEXT           "Быстрые действия:", -1, 195, 154, 140, 8
-    PUSHBUTTON      "Позвать в центр", IDC_BTN_RECENTER, 195, 166, 145, 15
-    PUSHBUTTON      "Сделать кучку", IDC_BTN_POOP_NOW, 195, 185, 145, 15
-    PUSHBUTTON      "Очистить все кучки", IDC_BTN_CLEAN_POOP, 195, 204, 145, 15
+    LTEXT           "Быстрые команды:", -1, 203, 177, 120, 8
+    PUSHBUTTON      "Позвать в центр", IDC_BTN_RECENTER, 203, 189, 78, 14
+    PUSHBUTTON      "Сказать фразу", IDC_BTN_SAY, 286, 189, 76, 14
+    PUSHBUTTON      "Сделать кучку", IDC_BTN_POOP_NOW, 203, 208, 78, 14
+    PUSHBUTTON      "Очистить кучки", IDC_BTN_CLEAN_POOP, 286, 208, 76, 14
 
     // Bottom section: Custom Skins
-    GROUPBOX        "Пользовательские скины (.gupet)", -1, 10, 248, 340, 68
-    LTEXT           "Установленный скин:", -1, 20, 263, 100, 8
-    COMBOBOX        IDC_SKIN_COMBO, 20, 274, 210, 100, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    PUSHBUTTON      "Сбросить", IDC_BTN_RESET_SKIN, 235, 273, 50, 15
-    PUSHBUTTON      "Импорт .gupet...", IDC_BTN_IMPORT_SKIN, 20, 293, 110, 15
-    LTEXT           "Формат: архив .gupet с manifest.json и кадрами 18 × 13", -1, 136, 296, 205, 8, WS_DISABLED
+    GROUPBOX        "Пользовательские скины (.gupet)", -1, 10, 290, 360, 68
+    LTEXT           "Выбор скина:", -1, 18, 305, 70, 8
+    COMBOBOX        IDC_SKIN_COMBO, 18, 316, 235, 100, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Сбросить", IDC_BTN_RESET_SKIN, 260, 315, 52, 15
+    PUSHBUTTON      "+ Импорт .gupet...", IDC_BTN_IMPORT_SKIN, 18, 336, 100, 15
+    LTEXT           "Формат архива: manifest.json и кадры 18 × 13 px", -1, 126, 339, 230, 8, WS_DISABLED
 
     // Stats & Close
-    LTEXT           "Поглаживаний: 0   |   Кучек убрано: 0", IDC_TXT_STATS, 12, 330, 250, 8
-    DEFPUSHBUTTON   "Закрыть", IDOK, 295, 350, 55, 16
+    LTEXT           "Поглаживаний: 0   |   Кучек убрано: 0", IDC_TXT_STATS, 12, 370, 260, 8
+    DEFPUSHBUTTON   "Готово", IDOK, 315, 390, 55, 16
 END

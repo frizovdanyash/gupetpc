@@ -16,8 +16,10 @@
 #define IDC_SPECIES_DOG       2013
 
 #define IDC_PALETTE_COMBO     2021
+
 #define IDC_SIZE_SLIDER       2031
 #define IDC_SIZE_VALUE        2032
+#define IDC_SIZE_EDIT         2033
 
 #define IDC_CHK_WANDER        2041
 #define IDC_CHK_PHRASES       2042
@@ -26,6 +28,9 @@
 #define IDC_CHK_HAPTICS       2045
 #define IDC_CHK_POOP          2046
 #define IDC_CHK_DANCE         2047
+#define IDC_CHK_TOPMOST       2048
+#define IDC_CHK_GHOST         2049
+#define IDC_CHK_AUTOSTART     2050
 
 #define IDC_SLEEP_COMBO       2051
 
@@ -36,5 +41,7 @@
 #define IDC_BTN_RECENTER      2071
 #define IDC_BTN_POOP_NOW      2072
 #define IDC_BTN_CLEAN_POOP    2073
+#define IDC_BTN_SAY           2074
+
 #define IDC_TXT_STATS         2081
 #define IDC_PREVIEW_AREA      2091

@@ -11,6 +11,7 @@
 #include <vector>
 #include <iomanip>
 #include <sstream>
+#include <algorithm>
 
 namespace GUPet {
 
@@ -44,8 +45,17 @@ void SettingsDialog::Show(HWND hParent) {
 
 void SettingsDialog::Close() {
     if (m_hwnd) {
+        KillTimer(m_hwnd, 999);
         DestroyWindow(m_hwnd);
         m_hwnd = NULL;
+    }
+    if (m_hBgBrush) {
+        DeleteObject(m_hBgBrush);
+        m_hBgBrush = NULL;
+    }
+    if (m_hCardBrush) {
+        DeleteObject(m_hCardBrush);
+        m_hCardBrush = NULL;
     }
 }
 
@@ -61,6 +71,29 @@ INT_PTR CALLBACK SettingsDialog::DialogProc(HWND hwnd, UINT msg, WPARAM wParam, 
                 self->OnInit(hwnd);
             }
             return TRUE;
+
+        case WM_TIMER:
+            if (wParam == 999 && self) {
+                self->RefreshPreview(hwnd);
+                return TRUE;
+            }
+            break;
+
+        case WM_CTLCOLORDLG:
+            if (self && self->m_hBgBrush) {
+                return (INT_PTR)self->m_hBgBrush;
+            }
+            break;
+
+        case WM_CTLCOLORSTATIC: {
+            HDC hdcStatic = (HDC)wParam;
+            SetBkMode(hdcStatic, TRANSPARENT);
+            SetTextColor(hdcStatic, RGB(30, 27, 26));
+            if (self && self->m_hBgBrush) {
+                return (INT_PTR)self->m_hBgBrush;
+            }
+            break;
+        }
 
         case WM_COMMAND:
             if (self) {
@@ -96,6 +129,9 @@ void SettingsDialog::OnInit(HWND hwnd) {
     SendMessage(hwnd, WM_SETICON, ICON_BIG, (LPARAM)hIcon);
     SendMessage(hwnd, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
 
+    m_hBgBrush = CreateSolidBrush(RGB(253, 248, 246));
+    m_hCardBrush = CreateSolidBrush(RGB(246, 241, 238));
+
     const auto& s = SettingsManager::Instance().GetSettings();
 
     // Species
@@ -111,15 +147,19 @@ void SettingsDialog::OnInit(HWND hwnd) {
     }
     SendMessage(hPalette, CB_SETCURSEL, s.palette, 0);
 
-    // Size slider
+    // Size slider (1.0x to 15.0x -> 10 to 150)
     HWND hSlider = GetDlgItem(hwnd, IDC_SIZE_SLIDER);
-    SendMessage(hSlider, TBM_SETRANGE, TRUE, MAKELPARAM(30, 50));
-    int sliderPos = static_cast<int>(s.sizeScale * 10.0f);
+    SendMessage(hSlider, TBM_SETRANGE, TRUE, MAKELPARAM(10, 150));
+    int sliderPos = std::max(10, std::min(150, static_cast<int>(s.sizeScale * 10.0f)));
     SendMessage(hSlider, TBM_SETPOS, TRUE, sliderPos);
 
     std::wstringstream ss;
     ss << std::fixed << std::setprecision(1) << s.sizeScale << L"x";
     SetDlgItemTextW(hwnd, IDC_SIZE_VALUE, ss.str().c_str());
+
+    std::wstringstream ssEdit;
+    ssEdit << std::fixed << std::setprecision(1) << s.sizeScale;
+    SetDlgItemTextW(hwnd, IDC_SIZE_EDIT, ssEdit.str().c_str());
 
     // Sleep combo
     HWND hSleep = GetDlgItem(hwnd, IDC_SLEEP_COMBO);
@@ -142,16 +182,22 @@ void SettingsDialog::OnInit(HWND hwnd) {
     CheckDlgButton(hwnd, IDC_CHK_HAPTICS, s.haptics ? BST_CHECKED : BST_UNCHECKED);
     CheckDlgButton(hwnd, IDC_CHK_POOP, s.poop ? BST_CHECKED : BST_UNCHECKED);
     CheckDlgButton(hwnd, IDC_CHK_DANCE, s.dance ? BST_CHECKED : BST_UNCHECKED);
+    CheckDlgButton(hwnd, IDC_CHK_TOPMOST, s.alwaysOnTop ? BST_CHECKED : BST_UNCHECKED);
+    CheckDlgButton(hwnd, IDC_CHK_GHOST, s.ghostMode ? BST_CHECKED : BST_UNCHECKED);
+    CheckDlgButton(hwnd, IDC_CHK_AUTOSTART, s.autostart ? BST_CHECKED : BST_UNCHECKED);
 
     PopulateSkins(hwnd);
     UpdateStats(hwnd);
+
+    // Start 30 FPS animation timer for live preview
+    SetTimer(hwnd, 999, 33, NULL);
 }
 
 void SettingsDialog::PopulateSkins(HWND hwnd) {
     HWND hSkin = GetDlgItem(hwnd, IDC_SKIN_COMBO);
     SendMessage(hSkin, CB_RESETCONTENT, 0, 0);
 
-    SendMessageW(hSkin, CB_ADDSTRING, 0, (LPARAM)L"— Стандартный вид —");
+    SendMessageW(hSkin, CB_ADDSTRING, 0, (LPARAM)L"— Встроенный вид —");
 
     auto skins = SkinStore::Instance().ListSkins();
     const auto& s = SettingsManager::Instance().GetSettings();
@@ -180,7 +226,26 @@ void SettingsDialog::UpdateStats(HWND hwnd) {
 
 void SettingsDialog::RefreshPreview(HWND hwnd) {
     HWND hPreview = GetDlgItem(hwnd, IDC_PREVIEW_AREA);
-    InvalidateRect(hPreview, NULL, TRUE);
+    if (hPreview) {
+        InvalidateRect(hPreview, NULL, FALSE);
+    }
+}
+
+void SettingsDialog::ApplyCustomSize(HWND hwnd, float scale) {
+    scale = std::max(0.5f, std::min(30.0f, scale));
+
+    auto& s = SettingsManager::Instance().GetMutableSettings();
+    s.sizeScale = scale;
+    SettingsManager::Instance().Save();
+    PetOverlay::Instance().ReloadSettings();
+
+    HWND hSlider = GetDlgItem(hwnd, IDC_SIZE_SLIDER);
+    int sliderPos = std::max(10, std::min(150, static_cast<int>(scale * 10.0f)));
+    SendMessage(hSlider, TBM_SETPOS, TRUE, sliderPos);
+
+    std::wstringstream ss;
+    ss << std::fixed << std::setprecision(1) << scale << L"x";
+    SetDlgItemTextW(hwnd, IDC_SIZE_VALUE, ss.str().c_str());
 }
 
 void SettingsDialog::OnCommand(HWND hwnd, WORD id, WORD code) {
@@ -190,6 +255,17 @@ void SettingsDialog::OnCommand(HWND hwnd, WORD id, WORD code) {
         case IDOK:
         case IDCANCEL:
             Close();
+            break;
+
+        case IDC_SIZE_EDIT:
+            if (code == EN_KILLFOCUS) {
+                wchar_t buf[32] = {0};
+                GetDlgItemTextW(hwnd, IDC_SIZE_EDIT, buf, 31);
+                try {
+                    float f = std::stof(buf);
+                    ApplyCustomSize(hwnd, f);
+                } catch (...) {}
+            }
             break;
 
         case IDC_SPECIES_GUPET:
@@ -222,7 +298,7 @@ void SettingsDialog::OnCommand(HWND hwnd, WORD id, WORD code) {
         case IDC_PALETTE_COMBO:
             if (code == CBN_SELCHANGE) {
                 int sel = (int)SendMessage(GetDlgItem(hwnd, IDC_PALETTE_COMBO), CB_GETCURSEL, 0, 0);
-                if (sel >= 0) {
+                if (sel >= 0 && sel < PetPalettes::PALETTE_COUNT) {
                     s.palette = sel;
                     SettingsManager::Instance().Save();
                     PetOverlay::Instance().ReloadSettings();
@@ -233,10 +309,10 @@ void SettingsDialog::OnCommand(HWND hwnd, WORD id, WORD code) {
 
         case IDC_SLEEP_COMBO:
             if (code == CBN_SELCHANGE) {
+                static const int minsMap[] = {0, 1, 2, 3, 5, 10};
                 int sel = (int)SendMessage(GetDlgItem(hwnd, IDC_SLEEP_COMBO), CB_GETCURSEL, 0, 0);
-                static const int mins[] = {0, 1, 2, 3, 5, 10};
                 if (sel >= 0 && sel < 6) {
-                    s.sleepMinutes = mins[sel];
+                    s.sleepMinutes = minsMap[sel];
                     SettingsManager::Instance().Save();
                 }
             }
@@ -277,8 +353,29 @@ void SettingsDialog::OnCommand(HWND hwnd, WORD id, WORD code) {
             SettingsManager::Instance().Save();
             break;
 
+        case IDC_CHK_TOPMOST:
+            s.alwaysOnTop = (IsDlgButtonChecked(hwnd, IDC_CHK_TOPMOST) == BST_CHECKED);
+            SettingsManager::Instance().Save();
+            PetOverlay::Instance().ReloadSettings();
+            break;
+
+        case IDC_CHK_GHOST:
+            s.ghostMode = (IsDlgButtonChecked(hwnd, IDC_CHK_GHOST) == BST_CHECKED);
+            SettingsManager::Instance().Save();
+            PetOverlay::Instance().ReloadSettings();
+            break;
+
+        case IDC_CHK_AUTOSTART:
+            s.autostart = (IsDlgButtonChecked(hwnd, IDC_CHK_AUTOSTART) == BST_CHECKED);
+            SettingsManager::Instance().Save();
+            break;
+
         case IDC_BTN_RECENTER:
             PetOverlay::Instance().Recenter();
+            break;
+
+        case IDC_BTN_SAY:
+            PetOverlay::Instance().Say("idle", true);
             break;
 
         case IDC_BTN_POOP_NOW:
@@ -363,6 +460,10 @@ void SettingsDialog::OnHScroll(HWND hwnd, LPARAM lParam) {
         std::wstringstream ss;
         ss << std::fixed << std::setprecision(1) << scale << L"x";
         SetDlgItemTextW(hwnd, IDC_SIZE_VALUE, ss.str().c_str());
+
+        std::wstringstream ssEdit;
+        ssEdit << std::fixed << std::setprecision(1) << scale;
+        SetDlgItemTextW(hwnd, IDC_SIZE_EDIT, ssEdit.str().c_str());
     }
 }
 
@@ -378,19 +479,38 @@ void SettingsDialog::OnDrawItem(HWND hwnd, DRAWITEMSTRUCT* dis) {
     HBITMAP hOldBmp = (HBITMAP)SelectObject(hdcMem, hBmp);
 
     Graphics g(hdcMem);
+    g.SetSmoothingMode(SmoothingModeAntiAlias);
+
+    // Modern card background
+    GraphicsPath cardPath;
+    int r = 18;
+    cardPath.AddArc(0, 0, r, r, 180, 90);
+    cardPath.AddArc(w - r - 1, 0, r, r, 270, 90);
+    cardPath.AddArc(w - r - 1, h - r - 1, r, r, 0, 90);
+    cardPath.AddArc(0, h - r - 1, r, r, 90, 90);
+    cardPath.CloseFigure();
+
+    LinearGradientBrush bgGrad(
+        Point(0, 0), Point(w, h),
+        Color(255, 255, 243, 237),
+        Color(255, 245, 230, 222)
+    );
+    g.FillPath(&bgGrad, &cardPath);
+
+    Pen borderPen(Color(120, 217, 119, 87), 1.5f);
+    g.DrawPath(&borderPen, &cardPath);
+
+    // Pixel rendering mode
     g.SetSmoothingMode(SmoothingModeNone);
     g.SetInterpolationMode(InterpolationModeNearestNeighbor);
 
-    SolidBrush bgBrush(Color(245, 245, 248));
-    g.FillRectangle(&bgBrush, 0, 0, w, h);
-
-    Pen borderPen(Color(220, 220, 225), 1.0f);
-    g.DrawRectangle(&borderPen, 0, 0, w - 1, h - 1);
-
     const auto& s = SettingsManager::Instance().GetSettings();
+    uint64_t now = GetTickCount64();
+
     PetFrame frame;
     frame.pose = PetPose::IDLE;
-    frame.expression = PetExpression::OPEN;
+    frame.expression = (now / 2000) % 8 == 0 ? PetExpression::BLINK : PetExpression::OPEN;
+    frame.phase = now / 1000.0f;
 
     std::shared_ptr<GUPetSkin> skin = nullptr;
     if (!s.customSkinId.empty()) {
@@ -399,11 +519,11 @@ void SettingsDialog::OnDrawItem(HWND hwnd, DRAWITEMSTRUCT* dis) {
 
     std::vector<PetParticle> emptyParticles;
 
-    float petW = 18.0f * 3.8f;
-    float petH = 17.0f * 3.8f;
+    float petW = 18.0f * 4.6f;
+    float petH = 17.0f * 4.6f;
 
     GraphicsState state = g.Save();
-    g.TranslateTransform((w - petW) / 2.0f, (h - petH) / 2.0f + 2.0f);
+    g.TranslateTransform((w - petW) / 2.0f, (h - petH) / 2.0f);
 
     PetRenderer::DrawPet(
         g,
@@ -412,7 +532,7 @@ void SettingsDialog::OnDrawItem(HWND hwnd, DRAWITEMSTRUCT* dis) {
         s.species,
         s.palette,
         frame,
-        0,
+        now,
         emptyParticles,
         skin
     );

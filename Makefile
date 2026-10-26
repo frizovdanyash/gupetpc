@@ -10,7 +10,7 @@ CC_LINUX  ?= gcc
 
 CXXFLAGS = -std=c++17 -O2 -Wall -Wno-unused-variable -DUNICODE -D_UNICODE -mwindows -static -static-libgcc -static-libstdc++
 CFLAGS   = -O2 -Wall -DUNICODE -D_UNICODE
-LDFLAGS  = -lgdiplus -lgdi32 -lcomctl32 -lshlwapi -lole32 -luxtheme -lmsimg32 -lwinmm -lws2_32
+LDFLAGS  = -lgdiplus -lgdi32 -lcomctl32 -lshlwapi -lole32 -luxtheme -lmsimg32 -lwinmm
 
 GTK_CFLAGS  = $(shell pkg-config --cflags gtk+-3.0 cairo pangocairo)
 GTK_LDFLAGS = $(shell pkg-config --libs gtk+-3.0 cairo pangocairo) -lpthread
@@ -24,17 +24,16 @@ SRCS_CPP = src/main.cpp \
            src/poop_manager.cpp \
            src/pet_overlay.cpp \
            src/settings_dialog.cpp \
-           src/tray_icon.cpp \
-           src/web_server.cpp
+           src/tray_icon.cpp
 
 SRCS_C = src/miniz.c
 
 SRCS_LINUX_CPP = src/main_linux.cpp \
                  src/pet_renderer_cairo.cpp \
                  src/pet_overlay_linux.cpp \
+                 src/settings_dialog_linux.cpp \
                  src/settings_manager.cpp \
-                 src/skin_store.cpp \
-                 src/web_server.cpp
+                 src/skin_store.cpp
 
 OBJS64_CPP = $(patsubst src/%.cpp, build64/%.o, $(SRCS_CPP))
 OBJS64_C   = $(patsubst src/%.c, build64/%.o, $(SRCS_C))
