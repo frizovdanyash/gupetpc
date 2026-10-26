@@ -12,7 +12,7 @@ struct GUPetSkinInfo {
     std::string id;
     std::string name;
     std::string author;
-    std::wstring folderPath;
+    std::string folderPath;
 };
 
 class GUPetSkin {
@@ -51,21 +51,24 @@ class SkinStore {
 public:
     static SkinStore& Instance();
 
-    void Init(const std::wstring& baseDir);
+    void Init(const std::string& baseDir);
     std::vector<GUPetSkinInfo> ListSkins();
     std::shared_ptr<GUPetSkin> LoadSkin(const std::string& id);
+    bool ImportSkin(const std::string& gupetFilePath, std::string& outId, std::string& outError);
+#ifdef _WIN32
     bool ImportSkin(const std::wstring& gupetFilePath, std::string& outId, std::string& outError);
+#endif
     bool DeleteSkin(const std::string& id);
 
-    std::wstring GetSkinsDir() const { return m_skinsDir; }
+    std::string GetSkinsDir() const { return m_skinsDir; }
 
 private:
     SkinStore() = default;
-    std::shared_ptr<GUPetSkin> LoadFromFolder(const std::wstring& folderPath);
+    std::shared_ptr<GUPetSkin> LoadFromFolder(const std::string& folderPath);
     bool ParseManifest(const std::string& json, GUPetSkinInfo& outInfo, std::map<std::string, std::string>& outFrameFiles);
     bool DecodePngBytes(const uint8_t* data, size_t size, std::vector<uint32_t>& outPixels, int& outW, int& outH);
 
-    std::wstring m_skinsDir;
+    std::string m_skinsDir;
     std::map<std::string, std::shared_ptr<GUPetSkin>> m_cachedSkins;
 };
 

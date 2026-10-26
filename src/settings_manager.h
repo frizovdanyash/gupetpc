@@ -16,13 +16,25 @@ public:
     void Save();
     void Load();
 
-    std::wstring GetAppDataDir() const { return m_appDataDir; }
+    std::string GetAppDataDirA() const { return m_appDataDirA; }
+#ifdef _WIN32
+    std::wstring GetAppDataDir() const { return m_appDataDirW; }
+#endif
+
+    bool SetAutostart(bool enable);
+    bool IsAutostartEnabled();
 
 private:
     SettingsManager() = default;
 
-    std::wstring m_appDataDir;
-    std::wstring m_configFile;
+    std::string m_appDataDirA;
+    std::string m_configFileA;
+
+#ifdef _WIN32
+    std::wstring m_appDataDirW;
+    std::wstring m_configFileW;
+#endif
+
     PetSettings m_settings;
 };
 

@@ -152,17 +152,24 @@ void PetOverlay::ReloadSettings() {
 
 void PetOverlay::ResizeWindow() {
     const auto& s = SettingsManager::Instance().GetSettings();
-    m_unitPx = s.sizeScale * 3.8f;
-    m_windowW = std::max(56, static_cast<int>(m_unitPx * 18.0f));
-    m_windowH = std::max(50, static_cast<int>(m_unitPx * 17.0f));
+    float scale = std::max(0.2f, s.sizeScale);
+    m_unitPx = scale * 3.8f;
+    m_windowW = std::max(24, static_cast<int>(m_unitPx * 18.0f));
+    m_windowH = std::max(24, static_cast<int>(m_unitPx * 17.0f));
 
     RefreshBounds();
     UpdateLayout(true);
 }
 
 void PetOverlay::RefreshBounds() {
-    RECT workArea;
-    SystemParametersInfoW(SPI_GETWORKAREA, 0, &workArea, 0);
+    RECT workArea = {0, 0, 1920, 1080};
+    HMONITOR hMon = MonitorFromWindow(m_hwnd, MONITOR_DEFAULTTONEAREST);
+    MONITORINFO mi = { sizeof(mi) };
+    if (hMon && GetMonitorInfoW(hMon, &mi)) {
+        workArea = mi.rcWork;
+    } else {
+        SystemParametersInfoW(SPI_GETWORKAREA, 0, &workArea, 0);
+    }
 
     m_minX = workArea.left;
     m_maxX = std::max(m_minX, (int)workArea.right - m_windowW);
@@ -204,8 +211,21 @@ void PetOverlay::SetPosition(float x, float y, bool allowOffscreen) {
 
 void PetOverlay::UpdateLayout(bool force) {
     if (!m_hwnd) return;
-    SetWindowPos(m_hwnd, HWND_TOPMOST, (int)m_posX, (int)m_posY, m_windowW, m_windowH,
+    const auto& s = SettingsManager::Instance().GetSettings();
+    HWND insertAfter = s.alwaysOnTop ? HWND_TOPMOST : HWND_NOTOPMOST;
+    SetWindowPos(m_hwnd, insertAfter, (int)m_posX, (int)m_posY, m_windowW, m_windowH,
                  SWP_NOACTIVATE | (force ? 0 : SWP_NOSIZE));
+
+    LONG_PTR exStyle = GetWindowLongPtr(m_hwnd, GWL_EXSTYLE);
+    if (s.ghostMode) {
+        if (!(exStyle & WS_EX_TRANSPARENT)) {
+            SetWindowLongPtr(m_hwnd, GWL_EXSTYLE, exStyle | WS_EX_TRANSPARENT);
+        }
+    } else {
+        if (exStyle & WS_EX_TRANSPARENT) {
+            SetWindowLongPtr(m_hwnd, GWL_EXSTYLE, exStyle & ~WS_EX_TRANSPARENT);
+        }
+    }
 }
 
 void PetOverlay::SetVisible(bool visible) {
@@ -396,7 +416,7 @@ void PetOverlay::StepGround(float dt, uint64_t now) {
     if (m_state == PetState::WALK) {
         int dir = (m_walkTarget >= m_posX) ? 1 : -1;
         m_look = dir;
-        m_posX += dir * m_unitPx * 12.0f * dt;
+        m_posX += dir * m_unitPx * 12.0f * dt * s.walkSpeed;
 
         bool reached = (dir > 0) ? (m_posX >= m_walkTarget) : (m_posX <= m_walkTarget);
         bool edge = (dir < 0 && m_posX <= m_minX) || (dir > 0 && m_posX >= m_maxX);
@@ -731,13 +751,14 @@ void PetOverlay::OnLButtonUp(int x, int y) {
         }
 
         const auto& s = SettingsManager::Instance().GetSettings();
+        bool wasFling = (std::hypot(vx, vy) > m_unitPx * 160.0f);
         if (std::abs(vy) > m_unitPx * 170.0f && m_posY <= m_minY + m_unitPx * 2.0f) {
             StartHang(now);
-        } else if (std::hypot(vx, vy) > m_unitPx * 160.0f || s.gravity) {
+        } else if (wasFling || (s.gravity && m_posY < m_maxY - 4.0f)) {
             m_state = PetState::FLY;
             m_velocityX = std::max(-1800.0f, std::min(1800.0f, vx));
             m_velocityY = std::max(-1800.0f, std::min(1800.0f, vy));
-            if (std::hypot(vx, vy) > 600.0f) Say("throw");
+            if (wasFling) Say("throw");
         } else {
             m_state = PetState::IDLE;
             m_squashUntil = now + 130;

@@ -32,6 +32,27 @@ public:
         return pool[dist(rng)];
     }
 
+    static std::string GetRandomUtf8(const std::string& category, const std::string& lastPhrase = "") {
+        std::wstring wLast(lastPhrase.begin(), lastPhrase.end());
+        std::wstring wRes = GetRandom(category, wLast);
+        if (wRes.empty()) return "";
+        // Convert UTF-16/wchar_t to UTF-8
+        std::string out;
+        for (wchar_t wc : wRes) {
+            if (wc < 0x80) {
+                out.push_back((char)wc);
+            } else if (wc < 0x800) {
+                out.push_back((char)(0xC0 | ((wc >> 6) & 0x1F)));
+                out.push_back((char)(0x80 | (wc & 0x3F)));
+            } else {
+                out.push_back((char)(0xE0 | ((wc >> 12) & 0x0F)));
+                out.push_back((char)(0x80 | ((wc >> 6) & 0x3F)));
+                out.push_back((char)(0x80 | (wc & 0x3F)));
+            }
+        }
+        return out;
+    }
+
 private:
     static const std::map<std::string, std::vector<std::wstring>>& GetTable() {
         static const std::map<std::string, std::vector<std::wstring>> phrases = {

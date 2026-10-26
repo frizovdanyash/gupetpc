@@ -89,7 +89,7 @@ struct PetSettings {
     bool show = true;
     PetSpecies species = PetSpecies::GUPET;
     int palette = 0;
-    float sizeScale = 4.0f; // 3.0 .. 5.0
+    float sizeScale = 4.0f; // Arbitrary scale factor (e.g. 0.5 .. 30.0)
     bool wander = true;
     bool phrases = true;
     bool gravity = false;
@@ -99,6 +99,10 @@ struct PetSettings {
     int sleepMinutes = 3;
     bool reactNotifications = false;
     bool dance = true;
+    bool alwaysOnTop = true;
+    bool ghostMode = false;
+    bool autostart = false;
+    float walkSpeed = 1.0f;
     std::string customSkinId = "";
     uint64_t customSkinRevision = 0;
 
