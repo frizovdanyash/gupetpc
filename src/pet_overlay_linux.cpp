@@ -406,6 +406,7 @@ void PetOverlayLinux::SetVisible(bool visible) {
     } else {
         gtk_widget_hide(m_window);
         HideBubble();
+        CleanAllPoops();
     }
 }
 

@@ -238,7 +238,8 @@ void PetOverlay::SetVisible(bool visible) {
         Say("hello");
     } else {
         ShowWindow(m_hwnd, SW_HIDE);
-        m_bubble.Hide();
+        m_bubble.HideImmediate();
+        PoopManager::Instance().CleanAll(false);
     }
 }
 

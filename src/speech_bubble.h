@@ -16,6 +16,7 @@ public:
 
     void Show(const std::wstring& text, int anchorX, int anchorY, int petW, int petH);
     void Hide();
+    void HideImmediate();
     void Update(int anchorX, int anchorY, int petW, int petH);
 
     bool IsVisible() const { return m_visible; }

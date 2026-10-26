@@ -84,9 +84,17 @@ void SpeechBubble::Show(const std::wstring& text, int anchorX, int anchorY, int 
 }
 
 void SpeechBubble::Hide() {
-    if (!m_visible) return;
+    HideImmediate();
+}
+
+void SpeechBubble::HideImmediate() {
+    m_visible = false;
     m_fadingIn = false;
-    m_fadingOut = true;
+    m_fadingOut = false;
+    m_alpha = 0.0f;
+    if (m_hwnd) {
+        ShowWindow(m_hwnd, SW_HIDE);
+    }
 }
 
 void SpeechBubble::UpdatePosition(int anchorX, int anchorY, int petW, int petH) {
